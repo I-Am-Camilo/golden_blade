@@ -34,7 +34,7 @@ class _PantallaSeleccionarProfesionalState
   void initState() {
     super.initState();
     _api = widget.servicioApi ?? ProfesionalService();
-    _consulta = _api.listar(soloActivos: true);
+    _consulta = _api.porServicio(widget.service.id);
   }
 
   @override
@@ -69,7 +69,7 @@ class _PantallaSeleccionarProfesionalState
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          _consulta = _api.listar(soloActivos: true);
+                          _consulta = _api.porServicio(widget.service.id);
                         });
                       },
                       child: const Text('Reintentar'),

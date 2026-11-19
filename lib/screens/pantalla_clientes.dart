@@ -1,3 +1,5 @@
+import 'pantalla_formulario_cliente.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/cliente.dart';
@@ -48,6 +50,22 @@ class _PantallaClientesState extends State<PantallaClientes> {
     });
   }
 
+  Future<void> _primeraVez() async {
+    final borrador = await Navigator.push<Cliente>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PantallaFormularioCliente(soloDatosReserva: true),
+      ),
+    );
+    if (!mounted || borrador == null) return;
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.reservationService,
+      arguments: borrador,
+    );
+    if (mounted) _recargar();
+  }
+
   Future<void> _nuevo() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     final resultado = await Navigator.pushNamed(context, AppRoutes.newClient);
@@ -70,12 +88,18 @@ class _PantallaClientesState extends State<PantallaClientes> {
       return;
     }
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    await Navigator.pushNamed(
+    final eliminado = await Navigator.pushNamed(
       context,
       AppRoutes.clientDetail,
       arguments: cliente,
     );
-    if (mounted) _recargar();
+    if (mounted) {
+      _recargar();
+      if (eliminado == true) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Cliente eliminado.')));
+      }
+    }
   }
 
   @override
@@ -88,6 +112,12 @@ class _PantallaClientesState extends State<PantallaClientes> {
         centerTitle: true,
         title: Text(widget.selecting ? 'Seleccionar cliente' : 'Clientes'),
         actions: [
+          if (widget.selecting)
+            IconButton(
+              tooltip: 'Reserva para cliente de primera vez',
+              onPressed: _primeraVez,
+              icon: const Icon(Icons.person_add_outlined),
+            ),
           IconButton(
             tooltip: 'Actualizar clientes',
             onPressed: _recargar,

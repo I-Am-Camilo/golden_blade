@@ -50,6 +50,20 @@ class EspecialidadService {
     return _especialidadGuardada(_procesar(respuesta));
   }
 
+  Future<Especialidad> obtener(int id) async {
+    if (id <= 0) throw const EspecialidadException('Ingresa un ID válido.');
+    final respuesta = await _esperar(
+      _client.get(Uri.parse('$_url/$id'), headers: _encabezados()),
+    );
+    final especialidad = _especialidadGuardada(_procesar(respuesta));
+    if (especialidad.id != id) {
+      throw const EspecialidadException(
+        'No se recibió la especialidad solicitada.',
+      );
+    }
+    return especialidad;
+  }
+
   Future<void> inactivar(int id) async {
     final respuesta = await _esperar(
       _client.delete(Uri.parse('$_url/$id'), headers: _encabezados()),

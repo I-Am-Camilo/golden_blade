@@ -75,7 +75,7 @@ class _PantallaRevisarReservaState extends State<PantallaRevisarReserva> {
     });
     try {
       if (_idCreada == null) {
-        if (widget.client.id <= 0 ||
+        if (widget.client.id < 0 ||
             widget.service.id <= 0 ||
             widget.appointment.isBefore(DateTime.now())) {
           throw const ReservaException(
@@ -87,14 +87,17 @@ class _PantallaRevisarReservaState extends State<PantallaRevisarReserva> {
             'Esta operación utiliza asignación automática. Vuelve a seleccionar el horario.',
           );
         }
-        final cliente = await _clientes.buscarPorDocumento(
-          widget.client.documento,
-        );
-        if (cliente.id != widget.client.id ||
-            cliente.nombreCompleto != widget.client.nombreCompleto) {
-          throw const ReservaException(
-            'Los datos del cliente cambiaron. Vuelve a seleccionarlo.',
+        final esNuevo = widget.client.id == 0;
+        if (!esNuevo) {
+          final cliente = await _clientes.buscarPorDocumento(
+            widget.client.documento,
           );
+          if (cliente.id != widget.client.id ||
+              cliente.nombreCompleto != widget.client.nombreCompleto) {
+            throw const ReservaException(
+              'Los datos del cliente cambiaron. Vuelve a seleccionarlo.',
+            );
+          }
         }
         final servicio = await _servicios.obtener(widget.service.id);
         if (!servicio.activo ||
@@ -120,12 +123,16 @@ class _PantallaRevisarReservaState extends State<PantallaRevisarReserva> {
           CrearReservaRequest(
             fecha: widget.appointment,
             servicioId: servicio.id,
-            clienteId: cliente.id,
+            clienteId: esNuevo ? null : widget.client.id,
+            clienteNuevo: esNuevo ? widget.client : null,
           ),
         );
       }
       final reserva = await _reservas.obtener(_idCreada!);
-      if (reserva.clienteId != widget.client.id ||
+      final clienteConfirmado = widget.client.id == 0
+          ? await _clientes.buscarPorDocumento(widget.client.documento)
+          : widget.client;
+      if (reserva.clienteId != clienteConfirmado.id ||
           reserva.servicioId != widget.service.id ||
           reserva.cita != widget.appointment) {
         throw const ReservaException(

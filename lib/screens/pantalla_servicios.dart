@@ -38,6 +38,7 @@ class _PantallaServiciosState extends State<PantallaServicios> {
   bool _consultandoId = false;
   Servicio? _seleccionado;
 
+  bool _eliminando = false;
   @override
   void initState() {
     super.initState();
@@ -178,322 +179,410 @@ class _PantallaServiciosState extends State<PantallaServicios> {
     }
   }
 
+  Future<void> _eliminar(Servicio servicio) async {
+    if (_eliminando) return;
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Eliminar servicio'),
+        content: Text('¿Seguro que deseas eliminar ${servicio.nombre}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('Volver'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmado != true || _eliminando) return;
+    setState(() => _eliminando = true);
+    try {
+      await _servicioApi.eliminar(servicio.id);
+      if (!mounted) return;
+      _idsConsultados.remove(servicio.id);
+      _recargar();
+      _mensaje('Servicio eliminado.');
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo confirmar la eliminación. Actualiza el listado antes de intentar de nuevo.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _eliminando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cliente = widget.cliente;
-    return Theme(
-      data: ThemeData.light(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          centerTitle: true,
-          title: Text(cliente == null ? 'Servicios' : 'Seleccionar servicio'),
-          actions: [
-            IconButton(
-              tooltip: 'Actualizar servicios',
-              onPressed: _consultandoId ? null : _recargar,
-              icon: const Icon(Icons.refresh, color: AppColors.buttonGoldDark),
-            ),
-            if (cliente == null) ...[
-              IconButton(
-                tooltip: 'Consultar servicio por ID',
-                onPressed: _consultandoId ? null : _consultarPorId,
-                icon: const Icon(
-                  Icons.manage_search,
-                  color: AppColors.buttonGoldDark,
-                ),
+    return PopScope(
+      canPop: !_eliminando,
+      child: AbsorbPointer(
+        absorbing: _eliminando,
+        child: Theme(
+          data: ThemeData.light(),
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              bottom: _eliminando
+                  ? const PreferredSize(
+                      preferredSize: Size.fromHeight(3),
+                      child: LinearProgressIndicator(),
+                    )
+                  : null,
+              backgroundColor: Colors.white,
+              centerTitle: true,
+              title: Text(
+                cliente == null ? 'Servicios' : 'Seleccionar servicio',
               ),
-              IconButton(
-                tooltip: 'Nuevo servicio',
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
+              actions: [
+                IconButton(
+                  tooltip: 'Actualizar servicios',
+                  onPressed: _consultandoId ? null : _recargar,
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: AppColors.buttonGoldDark,
+                  ),
                 ),
-                onPressed: _consultandoId ? null : () => _abrirFormulario(),
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          ],
-        ),
-        body: SafeArea(
-          child: Center(
-            child: SizedBox(
-              width: 520,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (cliente != null) ...[
-                      Text('Cliente: ${cliente.nombreCompleto}'),
-                      const SizedBox(height: 12),
-                    ],
-                    TextField(
-                      controller: _busquedaController,
-                      onChanged: (_) => setState(() => _seleccionado = null),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar servicio...',
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: AppColors.fieldBackground,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                if (cliente == null) ...[
+                  IconButton(
+                    tooltip: 'Consultar servicio por ID',
+                    onPressed: _consultandoId ? null : _consultarPorId,
+                    icon: const Icon(
+                      Icons.manage_search,
+                      color: AppColors.buttonGoldDark,
                     ),
-                    const SizedBox(height: 8),
-                    if (_consultandoId)
-                      const LinearProgressIndicator(
-                        color: AppColors.buttonGoldDark,
-                      ),
-                    Expanded(
-                      child: FutureBuilder<ServiciosResponse>(
-                        future: _serviciosFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.buttonGoldDark,
-                              ),
-                            );
-                          }
-                          if (snapshot.hasError) {
-                            final error = snapshot.error;
-                            return Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                  ),
+                  IconButton(
+                    tooltip: 'Nuevo servicio',
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
+                    ),
+                    onPressed: _consultandoId ? null : () => _abrirFormulario(),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ],
+            ),
+            body: SafeArea(
+              child: Center(
+                child: SizedBox(
+                  width: 520,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (cliente != null) ...[
+                          Text('Cliente: ${cliente.nombreCompleto}'),
+                          const SizedBox(height: 12),
+                        ],
+                        TextField(
+                          controller: _busquedaController,
+                          onChanged: (_) =>
+                              setState(() => _seleccionado = null),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar servicio...',
+                            prefixIcon: const Icon(Icons.search),
+                            filled: true,
+                            fillColor: AppColors.fieldBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_consultandoId)
+                          const LinearProgressIndicator(
+                            color: AppColors.buttonGoldDark,
+                          ),
+                        Expanded(
+                          child: FutureBuilder<ServiciosResponse>(
+                            future: _serviciosFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.buttonGoldDark,
+                                  ),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                final error = snapshot.error;
+                                return Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        error is ServicioException
+                                            ? error.mensaje
+                                            : error is EspecialidadException
+                                            ? error.mensaje
+                                            : 'No se pudieron cargar los servicios.',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      TextButton(
+                                        onPressed: _recargar,
+                                        child: const Text('Reintentar'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              final servicios = snapshot.data?.data ?? [];
+                              final opciones = <int, String>{
+                                for (final item in _especialidades)
+                                  item.id: item.nombre,
+                              };
+                              for (final servicio in servicios) {
+                                opciones.putIfAbsent(
+                                  servicio.especialidadId,
+                                  () => _nombreEspecialidad(
+                                    servicio.especialidadId,
+                                  ),
+                                );
+                              }
+                              final busqueda = _busquedaController.text
+                                  .trim()
+                                  .toLowerCase();
+                              final filtrados = servicios
+                                  .where(
+                                    (item) =>
+                                        item.nombre.toLowerCase().contains(
+                                          busqueda,
+                                        ) &&
+                                        (_especialidadId == 0 ||
+                                            item.especialidadId ==
+                                                _especialidadId) &&
+                                        (_activo == null ||
+                                            item.activo == _activo) &&
+                                        (cliente == null || item.activo),
+                                  )
+                                  .toList();
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Text(
-                                    error is ServicioException
-                                        ? error.mensaje
-                                        : error is EspecialidadException
-                                        ? error.mensaje
-                                        : 'No se pudieron cargar los servicios.',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  TextButton(
-                                    onPressed: _recargar,
-                                    child: const Text('Reintentar'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                          final servicios = snapshot.data?.data ?? [];
-                          final opciones = <int, String>{
-                            for (final item in _especialidades)
-                              item.id: item.nombre,
-                          };
-                          for (final servicio in servicios) {
-                            opciones.putIfAbsent(
-                              servicio.especialidadId,
-                              () =>
-                                  _nombreEspecialidad(servicio.especialidadId),
-                            );
-                          }
-                          final busqueda = _busquedaController.text
-                              .trim()
-                              .toLowerCase();
-                          final filtrados = servicios
-                              .where(
-                                (item) =>
-                                    item.nombre.toLowerCase().contains(
-                                      busqueda,
-                                    ) &&
-                                    (_especialidadId == 0 ||
-                                        item.especialidadId ==
-                                            _especialidadId) &&
-                                    (_activo == null ||
-                                        item.activo == _activo) &&
-                                    (cliente == null || item.activo),
-                              )
-                              .toList();
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              DropdownButton<int>(
-                                isExpanded: true,
-                                value: _especialidadId,
-                                items: [
-                                  const DropdownMenuItem(
-                                    value: 0,
-                                    child: Text('Todas las especialidades'),
-                                  ),
-                                  for (final opcion in opciones.entries)
-                                    DropdownMenuItem(
-                                      value: opcion.key,
-                                      child: Text(opcion.value),
-                                    ),
-                                ],
-                                onChanged: (id) => setState(() {
-                                  _especialidadId = id ?? 0;
-                                  _seleccionado = null;
-                                }),
-                              ),
-                              if (cliente == null)
-                                Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    _estado('Todos', null),
-                                    _estado('Activos', true),
-                                    _estado('Inactivos', false),
-                                  ],
-                                ),
-                              if (_activo == false)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Text(
-                                    'Se muestran los inactivos consultados en esta vista. Puedes recuperar otro con su ID.',
-                                    style: TextStyle(color: Colors.black54),
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: filtrados.isEmpty
-                                    ? Center(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.search_off,
-                                              size: 36,
-                                            ),
-                                            const Text(
-                                              'No se encontraron servicios.',
-                                            ),
-                                            TextButton(
-                                              onPressed: _limpiarFiltros,
-                                              child: const Text(
-                                                'Limpiar filtros',
-                                              ),
-                                            ),
-                                          ],
+                                  DropdownButton<int>(
+                                    isExpanded: true,
+                                    value: _especialidadId,
+                                    items: [
+                                      const DropdownMenuItem(
+                                        value: 0,
+                                        child: Text('Todas las especialidades'),
+                                      ),
+                                      for (final opcion in opciones.entries)
+                                        DropdownMenuItem(
+                                          value: opcion.key,
+                                          child: Text(opcion.value),
                                         ),
-                                      )
-                                    : ListView.separated(
-                                        keyboardDismissBehavior:
-                                            ScrollViewKeyboardDismissBehavior
-                                                .onDrag,
-                                        itemCount: filtrados.length,
-                                        separatorBuilder: (_, index) =>
-                                            const SizedBox(height: 8),
-                                        itemBuilder: (context, index) {
-                                          final servicio = filtrados[index];
-                                          return ListTile(
-                                            tileColor:
-                                                AppColors.fieldBackground,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            leading: const CircleAvatar(
-                                              backgroundColor:
-                                                  AppColors.goldAccent,
-                                              foregroundColor:
-                                                  AppColors.onPrimary,
-                                              child: Icon(Icons.content_cut),
-                                            ),
-                                            title: Text(
-                                              servicio.nombre,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            subtitle: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                    ],
+                                    onChanged: (id) => setState(() {
+                                      _especialidadId = id ?? 0;
+                                      _seleccionado = null;
+                                    }),
+                                  ),
+                                  if (cliente == null)
+                                    Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        _estado('Todos', null),
+                                        _estado('Activos', true),
+                                        _estado('Inactivos', false),
+                                      ],
+                                    ),
+                                  if (_activo == false)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      child: Text(
+                                        'Se muestran los inactivos consultados en esta vista. Puedes recuperar otro con su ID.',
+                                        style: TextStyle(color: Colors.black54),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: filtrados.isEmpty
+                                        ? Center(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(
-                                                  '${servicio.precioTexto} · ${servicio.duracion} min',
+                                                const Icon(
+                                                  Icons.search_off,
+                                                  size: 36,
                                                 ),
-                                                Text(
-                                                  '${_nombreEspecialidad(servicio.especialidadId)} · #${servicio.id}',
+                                                const Text(
+                                                  'No se encontraron servicios.',
                                                 ),
-                                                Text(
-                                                  servicio.activo
-                                                      ? 'Activo'
-                                                      : 'Inactivo',
-                                                  style: TextStyle(
-                                                    color: servicio.activo
-                                                        ? Colors.green.shade800
-                                                        : Colors.black54,
+                                                TextButton(
+                                                  onPressed: _limpiarFiltros,
+                                                  child: const Text(
+                                                    'Limpiar filtros',
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            selected:
-                                                _seleccionado?.id ==
-                                                servicio.id,
-                                            selectedTileColor:
-                                                AppColors.goldAccent,
-                                            onTap: cliente == null
-                                                ? null
-                                                : () {
-                                                    FocusScope.of(context)
-                                                        .unfocus();
-                                                    setState(
-                                                      () => _seleccionado =
-                                                          servicio,
-                                                    );
-                                                  },
-                                            trailing: cliente == null
-                                                ? IconButton(
-                                                    tooltip:
-                                                        'Editar ${servicio.nombre}',
-                                                    onPressed: () =>
-                                                        _abrirFormulario(
-                                                          servicio,
-                                                        ),
-                                                    icon: const Icon(
-                                                      Icons.edit_outlined,
-                                                    ),
-                                                  )
-                                                : Icon(
-                                                    _seleccionado?.id ==
-                                                            servicio.id
-                                                        ? Icons.check_circle
-                                                        : Icons
-                                                              .radio_button_unchecked,
-                                                  ),
-                                          );
-                                        },
-                                      ),
-                              ),
-                              if (cliente != null)
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: AppColors.onPrimary,
-                                  ),
-                                  onPressed:
-                                      _seleccionado == null ||
-                                          !filtrados.any(
-                                            (item) =>
-                                                item.id == _seleccionado!.id,
                                           )
-                                      ? null
-                                      : () => Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.reservationProfessional,
-                                          arguments: (
-                                            cliente,
-                                            _seleccionado!,
-                                            _nombreEspecialidad(
-                                              _seleccionado!.especialidadId,
-                                            ),
+                                        : ListView.separated(
+                                            keyboardDismissBehavior:
+                                                ScrollViewKeyboardDismissBehavior
+                                                    .onDrag,
+                                            itemCount: filtrados.length,
+                                            separatorBuilder: (_, index) =>
+                                                const SizedBox(height: 8),
+                                            itemBuilder: (context, index) {
+                                              final servicio = filtrados[index];
+                                              return ListTile(
+                                                tileColor:
+                                                    AppColors.fieldBackground,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                leading: const CircleAvatar(
+                                                  backgroundColor:
+                                                      AppColors.goldAccent,
+                                                  foregroundColor:
+                                                      AppColors.onPrimary,
+                                                  child: Icon(
+                                                    Icons.content_cut,
+                                                  ),
+                                                ),
+                                                title: Text(
+                                                  servicio.nombre,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                subtitle: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '${servicio.precioTexto} · ${servicio.duracion} min',
+                                                    ),
+                                                    Text(
+                                                      '${_nombreEspecialidad(servicio.especialidadId)} · #${servicio.id}',
+                                                    ),
+                                                    Text(
+                                                      servicio.activo
+                                                          ? 'Activo'
+                                                          : 'Inactivo',
+                                                      style: TextStyle(
+                                                        color: servicio.activo
+                                                            ? Colors
+                                                                  .green
+                                                                  .shade800
+                                                            : Colors.black54,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                selected:
+                                                    _seleccionado?.id ==
+                                                    servicio.id,
+                                                selectedTileColor:
+                                                    AppColors.goldAccent,
+                                                onTap: cliente == null
+                                                    ? null
+                                                    : () {
+                                                        FocusScope.of(context)
+                                                            .unfocus();
+                                                        setState(
+                                                          () => _seleccionado =
+                                                              servicio,
+                                                        );
+                                                      },
+                                                trailing: cliente == null
+                                                    ? Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          IconButton(
+                                                            tooltip:
+                                                                'Editar ${servicio.nombre}',
+                                                            onPressed: () =>
+                                                                _abrirFormulario(
+                                                                  servicio,
+                                                                ),
+                                                            icon: const Icon(
+                                                              Icons
+                                                                  .edit_outlined,
+                                                            ),
+                                                          ),
+                                                          IconButton(
+                                                            tooltip:
+                                                                'Eliminar ${servicio.nombre}',
+                                                            onPressed: () =>
+                                                                _eliminar(
+                                                                  servicio,
+                                                                ),
+                                                            icon: const Icon(
+                                                              Icons
+                                                                  .delete_outline,
+                                                              color: Colors.red,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      )
+                                                    : Icon(
+                                                        _seleccionado?.id ==
+                                                                servicio.id
+                                                            ? Icons.check_circle
+                                                            : Icons
+                                                                  .radio_button_unchecked,
+                                                      ),
+                                              );
+                                            },
                                           ),
-                                        ),
-                                  child: const Text('Siguiente'),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
+                                  ),
+                                  if (cliente != null)
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: AppColors.onPrimary,
+                                      ),
+                                      onPressed:
+                                          _seleccionado == null ||
+                                              !filtrados.any(
+                                                (item) =>
+                                                    item.id ==
+                                                    _seleccionado!.id,
+                                              )
+                                          ? null
+                                          : () => Navigator.pushNamed(
+                                              context,
+                                              AppRoutes.reservationProfessional,
+                                              arguments: (
+                                                cliente,
+                                                _seleccionado!,
+                                                _nombreEspecialidad(
+                                                  _seleccionado!.especialidadId,
+                                                ),
+                                              ),
+                                            ),
+                                      child: const Text('Siguiente'),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

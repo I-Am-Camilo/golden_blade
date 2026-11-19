@@ -6,8 +6,14 @@ import '../services/cliente_service.dart';
 import '../theme/app_colors.dart';
 
 class PantallaFormularioCliente extends StatefulWidget {
-  const PantallaFormularioCliente({super.key, this.cliente, this.servicioApi});
+  const PantallaFormularioCliente({
+    super.key,
+    this.cliente,
+    this.servicioApi,
+    this.soloDatosReserva = false,
+  });
 
+  final bool soloDatosReserva;
   final Cliente? cliente;
   final ClienteService? servicioApi;
 
@@ -100,6 +106,20 @@ class _PantallaFormularioClienteState extends State<PantallaFormularioCliente> {
         celular: _celular.text.trim(),
         correo: _correo.text.trim(),
       );
+      if (widget.soloDatosReserva) {
+        // ID 0 identifica únicamente este borrador local; no se envía como clienteId.
+        final borrador = Cliente(
+          id: 0,
+          documento: request.documento,
+          nombres: request.nombres,
+          apellidos: request.apellidos,
+          fechaNacimiento: request.fechaNacimiento,
+          celular: request.celular,
+          correo: request.correo,
+        );
+        if (mounted) Navigator.pop(context, borrador);
+        return;
+      }
       final guardado = widget.cliente == null
           ? await _api.crear(request)
           : await _api.editar(widget.cliente!.id, request);
@@ -150,7 +170,11 @@ class _PantallaFormularioClienteState extends State<PantallaFormularioCliente> {
             backgroundColor: Colors.white,
             centerTitle: true,
             title: Text(
-              widget.cliente == null ? 'Nuevo cliente' : 'Editar cliente',
+              widget.soloDatosReserva
+                  ? 'Cliente de primera vez'
+                  : widget.cliente == null
+                  ? 'Nuevo cliente'
+                  : 'Editar cliente',
             ),
           ),
           body: FutureBuilder<void>(
@@ -275,6 +299,10 @@ class _PantallaFormularioClienteState extends State<PantallaFormularioCliente> {
                               return null;
                             },
                           ),
+                          if (widget.soloDatosReserva)
+                            const Text(
+                              'El cliente se registrará al confirmar la reserva.',
+                            ),
                           const SizedBox(height: 24),
                           if (_guardando) const LinearProgressIndicator(),
                           ElevatedButton(
@@ -287,6 +315,8 @@ class _PantallaFormularioClienteState extends State<PantallaFormularioCliente> {
                             child: Text(
                               _guardando
                                   ? 'Guardando...'
+                                  : widget.soloDatosReserva
+                                  ? 'Continuar con la reserva'
                                   : widget.cliente == null
                                   ? 'Guardar'
                                   : 'Guardar cambios',

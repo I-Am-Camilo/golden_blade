@@ -23,6 +23,7 @@ class _PantallaDetalleClienteState extends State<PantallaDetalleCliente> {
   late String _documento;
   late Future<Cliente> _consulta;
   Future<List<Reserva>>? _historial;
+  bool _eliminando = false;
   @override
   void initState() {
     super.initState();
@@ -68,174 +69,238 @@ class _PantallaDetalleClienteState extends State<PantallaDetalleCliente> {
         .showSnackBar(const SnackBar(content: Text('Cliente actualizado.')));
   }
 
-  @override
-  Widget build(BuildContext context) => Theme(
-    data: ThemeData.light(),
-    child: DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('Detalle del cliente'),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          actions: [
-            IconButton(
-              tooltip: 'Actualizar cliente',
-              onPressed: _recargar,
-              icon: const Icon(Icons.refresh),
+  Future<void> _eliminar(Cliente cliente) async {
+    if (_eliminando) return;
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Eliminar cliente'),
+        content: Text('¿Seguro que deseas eliminar ${cliente.nombreCompleto}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('Volver'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmado != true || _eliminando) return;
+    setState(() => _eliminando = true);
+    try {
+      await _api.eliminar(cliente.id);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo confirmar la eliminación. Actualiza el listado antes de intentar de nuevo.',
             ),
-          ],
-        ),
-        body: SafeArea(
-          child: Center(
-            child: SizedBox(
-              width: 480,
-              child: FutureBuilder<Cliente>(
-                future: _consulta,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.buttonGoldDark,
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return _error(snapshot.error, _recargar);
-                  }
-                  final cliente = snapshot.data!;
-                  return Column(
-                    children: [
-                      const SizedBox(height: 12),
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor: AppColors.goldAccent,
-                        foregroundColor: AppColors.onPrimary,
-                        child: Text(
-                          cliente.nombres.isEmpty ? '?' : cliente.nombres[0],
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        cliente.nombreCompleto,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const TabBar(
-                        labelColor: AppColors.buttonGoldDark,
-                        indicatorColor: AppColors.buttonGoldDark,
-                        tabs: [
-                          Tab(text: 'Información'),
-                          Tab(text: 'Historial'),
-                        ],
-                      ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            ListView(
-                              padding: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _eliminando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_eliminando,
+    child: AbsorbPointer(
+      absorbing: _eliminando,
+      child: Theme(
+        data: ThemeData.light(),
+        child: DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              title: const Text('Detalle del cliente'),
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              actions: [
+                IconButton(
+                  tooltip: 'Actualizar cliente',
+                  onPressed: _recargar,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            body: SafeArea(
+              child: Center(
+                child: SizedBox(
+                  width: 480,
+                  child: FutureBuilder<Cliente>(
+                    future: _consulta,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.buttonGoldDark,
+                          ),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return _error(snapshot.error, _recargar);
+                      }
+                      final cliente = snapshot.data!;
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: AppColors.goldAccent,
+                            foregroundColor: AppColors.onPrimary,
+                            child: Text(
+                              cliente.nombres.isEmpty
+                                  ? '?'
+                                  : cliente.nombres[0],
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            cliente.nombreCompleto,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const TabBar(
+                            labelColor: AppColors.buttonGoldDark,
+                            indicatorColor: AppColors.buttonGoldDark,
+                            tabs: [
+                              Tab(text: 'Información'),
+                              Tab(text: 'Historial'),
+                            ],
+                          ),
+                          Expanded(
+                            child: TabBarView(
                               children: [
-                                _dato('ID', '${cliente.id}'),
-                                _dato('Documento', cliente.documento),
-                                _dato('Nombres', cliente.nombres),
-                                _dato('Apellidos', cliente.apellidos),
-                                _dato(
-                                  'Fecha de nacimiento',
-                                  cliente.nacimientoTexto,
+                                ListView(
+                                  padding: const EdgeInsets.all(16),
+                                  children: [
+                                    _dato('ID', '${cliente.id}'),
+                                    _dato('Documento', cliente.documento),
+                                    _dato('Nombres', cliente.nombres),
+                                    _dato('Apellidos', cliente.apellidos),
+                                    _dato(
+                                      'Fecha de nacimiento',
+                                      cliente.nacimientoTexto,
+                                    ),
+                                    _dato('Celular', cliente.celular),
+                                    _dato('Correo', cliente.correo),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: AppColors.onPrimary,
+                                        minimumSize: const Size(0, 48),
+                                      ),
+                                      onPressed: () => _editar(cliente),
+                                      child: const Text('Editar cliente'),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () => _eliminar(cliente),
+                                      icon: const Icon(Icons.delete_outline),
+                                      label: Text(
+                                        _eliminando
+                                            ? 'Eliminando…'
+                                            : 'Eliminar cliente',
+                                      ),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                _dato('Celular', cliente.celular),
-                                _dato('Correo', cliente.correo),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: AppColors.onPrimary,
-                                    minimumSize: const Size(0, 48),
+                                FutureBuilder<List<Reserva>>(
+                                  future: _historial ??= _api.historial(
+                                    cliente.id,
                                   ),
-                                  onPressed: () => _editar(cliente),
-                                  child: const Text('Editar cliente'),
+                                  builder: (context, historial) {
+                                    if (historial.connectionState !=
+                                        ConnectionState.done) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(),
+                                      );
+                                    }
+                                    if (historial.hasError) {
+                                      return _error(historial.error, () {
+                                        setState(() {
+                                          _historial = _api.historial(
+                                            cliente.id,
+                                          );
+                                        });
+                                      });
+                                    }
+                                    final reservas = historial.data!;
+                                    if (reservas.isEmpty) {
+                                      return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(16),
+                                          child: Text(
+                                            'Este cliente no tiene reservas registradas.',
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return ListView.separated(
+                                      padding: const EdgeInsets.all(16),
+                                      itemCount: reservas.length,
+                                      separatorBuilder: (_, index) =>
+                                          const SizedBox(height: 8),
+                                      itemBuilder: (context, index) {
+                                        final reserva = reservas[index];
+                                        final fecha = MaterialLocalizations.of(
+                                          context,
+                                        ).formatMediumDate(reserva.fecha);
+                                        return ListTile(
+                                          tileColor: AppColors.fieldBackground,
+                                          leading: const Icon(
+                                            Icons.event_note,
+                                            color: AppColors.buttonGoldDark,
+                                          ),
+                                          title: Text(reserva.servicio),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Reserva #${reserva.id} · ${reserva.estadoTexto}',
+                                              ),
+                                              Text(
+                                                '$fecha · ${_hora(reserva.horaInicio)} - ${_hora(reserva.horaFin)}',
+                                              ),
+                                              Text(
+                                                reserva.profesional.isEmpty
+                                                    ? 'Profesional sin asignar'
+                                                    : reserva.profesional,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
                                 ),
                               ],
                             ),
-                            FutureBuilder<List<Reserva>>(
-                              future: _historial ??= _api.historial(cliente.id),
-                              builder: (context, historial) {
-                                if (historial.connectionState !=
-                                    ConnectionState.done) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (historial.hasError) {
-                                  return _error(historial.error, () {
-                                    setState(() {
-                                      _historial = _api.historial(cliente.id);
-                                    });
-                                  });
-                                }
-                                final reservas = historial.data!;
-                                if (reservas.isEmpty) {
-                                  return const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Text(
-                                        'Este cliente no tiene reservas registradas.',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return ListView.separated(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: reservas.length,
-                                  separatorBuilder: (_, index) =>
-                                      const SizedBox(height: 8),
-                                  itemBuilder: (context, index) {
-                                    final reserva = reservas[index];
-                                    final fecha = MaterialLocalizations.of(
-                                      context,
-                                    ).formatMediumDate(reserva.fecha);
-                                    return ListTile(
-                                      tileColor: AppColors.fieldBackground,
-                                      leading: const Icon(
-                                        Icons.event_note,
-                                        color: AppColors.buttonGoldDark,
-                                      ),
-                                      title: Text(reserva.servicio),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Reserva #${reserva.id} · ${reserva.estadoTexto}',
-                                          ),
-                                          Text(
-                                            '$fecha · ${_hora(reserva.horaInicio)} - ${_hora(reserva.horaFin)}',
-                                          ),
-                                          Text(
-                                            reserva.profesional.isEmpty
-                                                ? 'Profesional sin asignar'
-                                                : reserva.profesional,
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),

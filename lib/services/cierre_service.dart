@@ -47,6 +47,21 @@ class CierreService {
     return cierres;
   }
 
+  Future<Cierre?> ultimo() async {
+    final respuesta = await _esperar(
+      _client.get(Uri.parse('$_url?ultimo=true'), headers: _encabezados()),
+    );
+    final datos = _procesar(respuesta)['data'];
+    if (datos == null || (datos is List && datos.isEmpty)) return null;
+    if (datos is Map<String, dynamic>) return Cierre.fromJson(datos);
+    if (datos is List &&
+        datos.length == 1 &&
+        datos.first is Map<String, dynamic>) {
+      return Cierre.fromJson(datos.first as Map<String, dynamic>);
+    }
+    throw const FormatException('No se pudo identificar el último cierre.');
+  }
+
   // La API no publica GET por ID: el detalle se recupera del listado real.
   Future<Cierre> obtener(int id) async {
     final cierres = await listar();

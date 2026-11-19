@@ -28,6 +28,20 @@ class ProfesionalService {
     return ProfesionalesResponse.fromJson(_procesar(respuesta));
   }
 
+  // La ruta publicada conserva el nombre "especialiades", pero recibe un ID de servicio.
+  Future<ProfesionalesResponse> porServicio(int servicioId) async {
+    if (servicioId <= 0) {
+      throw const ProfesionalException('Selecciona un servicio válido.');
+    }
+    final respuesta = await _esperar(
+      _client.get(
+        Uri.parse('$_url/$servicioId/especialiades'),
+        headers: _encabezados(),
+      ),
+    );
+    return ProfesionalesResponse.fromJson(_procesar(respuesta));
+  }
+
   Future<Profesional> crear(CrearProfesionalRequest request) async {
     final respuesta = await _esperar(
       _client.post(

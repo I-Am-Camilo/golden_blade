@@ -280,9 +280,7 @@ class _PantallaFormularioInasistenciaState
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          'Los motivos se muestran por código; sus nombres aún no están confirmados.',
-                        ),
+                        child: Text('Motivos identificados por código.'),
                       ),
                       TextFormField(
                         enabled: !_guardando,

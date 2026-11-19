@@ -12,9 +12,11 @@ class PantallaFormularioJornada extends StatefulWidget {
     required this.profesionalId,
     required this.diaSemana,
     this.jornada,
+    this.variosDias = false,
     this.servicioApi,
   });
 
+  final bool variosDias;
   final int profesionalId;
   final int diaSemana;
   final JornadaLaboral? jornada;
@@ -33,6 +35,8 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
   late bool _tieneAlmuerzo;
   late final JornadaService _api;
   bool _guardando = false;
+  bool _resultadoIncierto = false;
+  final _dias = <int>{};
 
   @override
   void initState() {
@@ -70,12 +74,15 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
   }
 
   Future<void> _guardar() async {
-    if (_guardando) return;
+    if (_guardando || _resultadoIncierto) return;
     final start = _minutos(_inicio);
     final end = _minutos(_fin);
     final lunchStart = _minutos(_inicioAlmuerzo);
     final lunchEnd = _minutos(_finAlmuerzo);
     String? error;
+    if (widget.variosDias && _dias.isEmpty) {
+      error = "Selecciona al menos un día.";
+    }
 
     if (start >= end) {
       error = 'La hora de fin debe ser posterior al inicio.';
@@ -100,6 +107,22 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
       final fin = _horaApi(_fin);
       final almuerzoInicio = _tieneAlmuerzo ? _horaApi(_inicioAlmuerzo) : null;
       final almuerzoFin = _tieneAlmuerzo ? _horaApi(_finAlmuerzo) : null;
+      if (widget.variosDias) {
+        await _api.crearMasivo(
+          CrearJornadaRequest(
+            profesionalId: widget.profesionalId,
+            diaSemana: widget.diaSemana,
+            horaInicio: inicio,
+            horaFin: fin,
+            tieneAlmuerzo: _tieneAlmuerzo,
+            horaInicioAlmuerzo: almuerzoInicio,
+            horaFinAlmuerzo: almuerzoFin,
+          ),
+          _dias.toList()..sort(),
+        );
+        if (mounted) Navigator.pop(context, true);
+        return;
+      }
       final JornadaLaboral guardada;
       if (widget.jornada == null) {
         guardada = await _api.crear(
@@ -134,6 +157,9 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       if (mounted) {
+        if (error is JornadaException && error.resultadoIncierto) {
+          setState(() => _resultadoIncierto = true);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -187,7 +213,11 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
           appBar: AppBar(
             backgroundColor: Colors.white,
             title: Text(
-              widget.jornada == null ? 'Agregar jornada' : 'Editar jornada',
+              widget.variosDias
+                  ? 'Crear jornadas para varios días'
+                  : widget.jornada == null
+                  ? 'Agregar jornada'
+                  : 'Editar jornada',
             ),
           ),
           body: SafeArea(
@@ -198,13 +228,34 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text(
-                      JornadaLaboral.dias[widget.diaSemana],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    if (widget.variosDias)
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final dia in [1, 2, 3, 4, 5, 6, 0])
+                            FilterChip(
+                              label: Text(JornadaLaboral.dias[dia]),
+                              selected: _dias.contains(dia),
+                              onSelected: _guardando
+                                  ? null
+                                  : (seleccionado) => setState(() {
+                                      if (seleccionado) {
+                                        _dias.add(dia);
+                                      } else {
+                                        _dias.remove(dia);
+                                      }
+                                    }),
+                            ),
+                        ],
                       ),
-                    ),
+                    if (!widget.variosDias)
+                      Text(
+                        JornadaLaboral.dias[widget.diaSemana],
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     _campoHora(
                       'Hora de inicio',
                       _inicio,
@@ -232,6 +283,10 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
                       ),
                     ],
                     const SizedBox(height: 16),
+                    if (_resultadoIncierto)
+                      const Text(
+                        'Vuelve al horario y actualiza las jornadas antes de intentar otro guardado.',
+                      ),
                     if (_guardando) const LinearProgressIndicator(),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -239,7 +294,9 @@ class _PantallaFormularioJornadaState extends State<PantallaFormularioJornada> {
                         foregroundColor: AppColors.onPrimary,
                         minimumSize: const Size(0, 48),
                       ),
-                      onPressed: _guardando ? null : _guardar,
+                      onPressed: _guardando || _resultadoIncierto
+                          ? null
+                          : _guardar,
                       child: Text(_guardando ? 'Guardando...' : 'Guardar'),
                     ),
                   ],

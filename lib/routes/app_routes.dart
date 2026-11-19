@@ -1,3 +1,5 @@
+import '../screens/pantalla_jornadas.dart';
+
 import 'package:flutter/material.dart';
 
 import '../services/sesion_service.dart';
@@ -263,8 +265,7 @@ class AppRoutes {
       }
       return const PantallaProfesionales();
     },
-    schedules: (context) =>
-        const PantallaProfesionales(seleccionarHorario: true),
+    schedules: (context) => const PantallaJornadas(),
     weeklySchedule: (context) {
       final professional = ModalRoute.of(context)?.settings.arguments;
       if (professional is Profesional) {

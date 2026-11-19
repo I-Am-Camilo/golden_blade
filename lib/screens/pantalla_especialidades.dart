@@ -1,3 +1,5 @@
+import '../widgets/solicitar_id.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/especialidad.dart';
@@ -42,6 +44,38 @@ class _PantallaEspecialidadesState extends State<PantallaEspecialidades> {
     });
   }
 
+  Future<void> _consultarId() async {
+    final id = await solicitarId(context, 'Consultar especialidad por ID');
+    if (!mounted || id == null) return;
+    try {
+      final especialidad = await _servicio.obtener(id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogo) => AlertDialog(
+          title: Text(especialidad.nombre),
+          content: Text(
+            'ID: ${especialidad.id}\n${especialidad.activa ? "Activa" : "Inactiva"}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogo),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        _mostrarMensaje(
+          error is EspecialidadException
+              ? error.mensaje
+              : 'No se pudo consultar la especialidad.',
+        );
+      }
+    }
+  }
+
   Future<void> _abrirFormulario([Especialidad? especialidad]) async {
     final resultado = await Navigator.pushNamed(
       context,
@@ -70,9 +104,7 @@ class _PantallaEspecialidadesState extends State<PantallaEspecialidades> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Inactivar especialidad'),
-        content: Text(
-          '¿Seguro que deseas inactivar ${especialidad.nombre}?',
-        ),
+        content: Text('¿Seguro que deseas inactivar ${especialidad.nombre}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -119,6 +151,11 @@ class _PantallaEspecialidadesState extends State<PantallaEspecialidades> {
             centerTitle: true,
             title: const Text('Especialidades'),
             actions: [
+              IconButton(
+                tooltip: 'Consultar especialidad por ID',
+                onPressed: _consultarId,
+                icon: const Icon(Icons.manage_search),
+              ),
               IconButton(
                 tooltip: 'Actualizar especialidades',
                 onPressed: _inactivando ? null : _recargar,

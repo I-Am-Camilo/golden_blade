@@ -21,6 +21,12 @@ class ReservaService {
   static const _url = '${AppConfig.apiBaseUrl}/Reservas';
   Future<int> crear(CrearReservaRequest request) async {
     final encabezados = _encabezados();
+    if (request.clienteNuevo != null) {
+      // Variante pública de Bruno: la empresa se indica en este encabezado.
+      encabezados.remove('Authorization');
+      encabezados['X-Empresa-Id'] = '${SesionService.actual!.empresaId}';
+    }
+
     final http.Response respuesta;
     try {
       respuesta = await _esperar(
@@ -53,7 +59,10 @@ class ReservaService {
     if (datos is! Map<String, dynamic> ||
         datos['id'] is! int ||
         (datos['id'] as int) <= 0 ||
-        datos['clienteId'] != request.clienteId ||
+        (request.clienteNuevo == null &&
+            datos['clienteId'] != request.clienteId) ||
+        (request.clienteNuevo != null &&
+            (datos['clienteId'] is! int || (datos['clienteId'] as int) <= 0)) ||
         datos['servicioId'] != request.servicioId) {
       throw const ReservaException(
         'La API informó un guardado, pero no permitió identificar la reserva. Consulta la agenda.',

@@ -87,6 +87,18 @@ class ClienteService {
     return reservas;
   }
 
+  Future<void> eliminar(int id) async {
+    if (id <= 0) throw const ClienteException('Selecciona un registro válido.');
+    final respuesta = await _esperar(
+      _client.delete(Uri.parse('$_url/$id'), headers: _encabezados()),
+    );
+    if ((respuesta.statusCode == 200 || respuesta.statusCode == 204) &&
+        respuesta.body.trim().isEmpty) {
+      return;
+    }
+    _procesar(respuesta);
+  }
+
   Map<String, String> _encabezados() {
     if (!SesionService.activa) {
       throw const ClienteException('Tu sesión venció. Ingresa de nuevo.');

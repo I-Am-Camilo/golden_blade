@@ -53,6 +53,41 @@ class _PantallaCierresState extends State<PantallaCierres> {
     });
   }
 
+  bool _consultandoUltimo = false;
+  Future<void> _ultimo() async {
+    if (_consultandoUltimo) return;
+    setState(() => _consultandoUltimo = true);
+    try {
+      final cierre = await _api.ultimo();
+      if (!mounted) return;
+      if (cierre == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay cierres registrados.')),
+        );
+      } else {
+        await Navigator.pushNamed(
+          context,
+          AppRoutes.closingDetail,
+          arguments: cierre,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is CierreException
+                  ? error.mensaje
+                  : 'No se pudo consultar el último cierre.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _consultandoUltimo = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<List<Cierre>>(
     future: _consulta,
@@ -106,6 +141,11 @@ class _PantallaCierresState extends State<PantallaCierres> {
           centerTitle: true,
           title: const Text('Cierres'),
           actions: [
+            IconButton(
+              tooltip: 'Último cierre',
+              onPressed: _consultandoUltimo ? null : _ultimo,
+              icon: const Icon(Icons.history),
+            ),
             IconButton(
               tooltip: 'Actualizar cierres',
               onPressed: _recargar,
