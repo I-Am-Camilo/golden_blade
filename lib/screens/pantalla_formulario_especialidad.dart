@@ -193,7 +193,7 @@ class _PantallaFormularioEspecialidadState
                           const SizedBox(height: 20),
                           ListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Estado informado por la API'),
+                            title: const Text('Estado actual'),
                             subtitle: Text(
                               widget.especialidad!.activa
                                   ? 'Activa'
@@ -201,7 +201,7 @@ class _PantallaFormularioEspecialidadState
                             ),
                           ),
                           const Text(
-                            'Puedes inactivar desde el listado. La API no publica una operación para reactivar.',
+                            'Puedes inactivar desde el listado. La reactivación no está disponible.',
                             style: TextStyle(color: Colors.black54),
                           ),
                         ],

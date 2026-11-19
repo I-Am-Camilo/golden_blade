@@ -102,7 +102,7 @@ class _PantallaSeleccionarProfesionalState
                         ),
                       if (professionals.isNotEmpty) ...[
                         const Text(
-                          'La API asignará automáticamente un profesional disponible de esta especialidad.',
+                          'Se asignará automáticamente un profesional disponible de esta especialidad.',
                         ),
                         for (final person in professionals)
                           ListTile(

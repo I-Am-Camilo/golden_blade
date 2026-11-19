@@ -130,7 +130,7 @@ class _PantallaResumenCierreState extends State<PantallaResumenCierre> {
                   const Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      'Revisa las fechas antes de generar. Los importes se conocerán cuando el servidor procese la liquidación.',
+                      'Revisa las fechas antes de generar. Los importes se mostrarán al finalizar la liquidación.',
                     ),
                   ),
                   if (_error != null)

@@ -100,7 +100,7 @@ class _PantallaDetalleComisionState extends State<PantallaDetalleComision> {
                       }
                       if (datos == null) {
                         return const Text(
-                          'El servidor no devolvió información de servicios.',
+                          'No se recibió información de los servicios.',
                         );
                       }
                       return DatosComision(datos: datos);

@@ -71,7 +71,7 @@ class _PantallaEspecialidadesState extends State<PantallaEspecialidades> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Inactivar especialidad'),
         content: Text(
-          '¿Quieres inactivar ${especialidad.nombre}? Dejará de aparecer en el listado. La API no publica una operación para reactivarla.',
+          '¿Seguro que deseas inactivar ${especialidad.nombre}?',
         ),
         actions: [
           TextButton(

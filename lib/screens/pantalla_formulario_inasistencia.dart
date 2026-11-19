@@ -147,7 +147,7 @@ class _PantallaFormularioInasistenciaState
         );
         if (creados == 0) {
           throw const InasistenciaException(
-            'La API omitió el período y no creó una inasistencia. Revisa si ya existe.',
+            'No se creó la inasistencia para el período seleccionado. Revisa si ya existe.',
           );
         }
       } else {
@@ -235,7 +235,7 @@ class _PantallaFormularioInasistenciaState
                       ),
                       if (!_diaCompleto) ...[
                         const Text(
-                          'La disponibilidad de la API bloquea el día completo incluso si se indican solo unas horas.',
+                          'La inasistencia bloquea la disponibilidad del día completo, aunque indiques solo unas horas.',
                         ),
                         ListTile(
                           title: const Text('Hora de inicio'),
@@ -281,7 +281,7 @@ class _PantallaFormularioInasistenciaState
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Text(
-                          'La API publica los códigos de motivo sin sus nombres.',
+                          'Los motivos se muestran por código; sus nombres aún no están confirmados.',
                         ),
                       ),
                       TextFormField(

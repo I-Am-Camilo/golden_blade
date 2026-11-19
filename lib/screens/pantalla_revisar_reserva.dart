@@ -216,7 +216,7 @@ class _PantallaRevisarReservaState extends State<PantallaRevisarReserva> {
                   _detail(
                     Icons.badge_outlined,
                     'Profesional',
-                    'Asignación automática por el servidor',
+                    'Asignación automática del profesional',
                   ),
                   _detail(
                     Icons.event_outlined,

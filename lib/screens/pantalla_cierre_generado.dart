@@ -31,7 +31,7 @@ class PantallaCierreGenerado extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'El cierre #${cierre.id} quedó guardado en el servidor.',
+                  'El cierre #${cierre.id} se guardó correctamente.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
