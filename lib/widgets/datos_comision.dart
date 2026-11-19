@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Presenta los campos que realmente vienen en la respuesta, sin calcular otros.
 class DatosComision extends StatelessWidget {
   const DatosComision({super.key, required this.datos});
   final Object? datos;

@@ -4,7 +4,6 @@ import '../models/login_response.dart';
 import 'almacenamiento_sesion_service.dart';
 
 class SesionService {
-  // Sesión activa en memoria; su persistencia es opcional.
   static LoginResponse? actual;
   static Timer? _temporizador;
   static void Function()? alVencer;
@@ -30,7 +29,6 @@ class SesionService {
     if (actual?.vencida == true) _vencer();
   }
 
-  // Los servicios protegidos usan estos encabezados para enviar el token.
   static Map<String, String> encabezados() {
     if (!activa) throw StateError('La sesión no está activa.');
     final sesion = actual!;
@@ -40,18 +38,13 @@ class SesionService {
     };
   }
 
-  // Revisa la autorización después de cada petición protegida.
   static void revisarRespuesta(int codigo) {
     if (codigo == 401 && actual != null) _vencer();
   }
 
   static void _vencer() {
     cerrar();
-    unawaited(
-      AlmacenamientoSesionService.eliminar().catchError((Object _) {
-        // El vencimiento del token impide restaurarlo aunque el dispositivo falle.
-      }),
-    );
+    unawaited(AlmacenamientoSesionService.eliminar().catchError((Object _) {}));
     alVencer?.call();
   }
 

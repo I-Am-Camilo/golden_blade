@@ -10,7 +10,6 @@ void main() {
   runApp(const GoldenBladeApp());
 }
 
-// Abre la aplicación completa desde Flutter Widget Preview en VS Code.
 @Preview(name: 'Golden Blade', size: Size(393, 852))
 Widget vistaPreviaGoldenBlade() => const GoldenBladeApp();
 

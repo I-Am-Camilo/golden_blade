@@ -120,7 +120,7 @@ class _PantallaAgendaState extends State<PantallaAgenda> {
               );
             }
             final todas = snapshot.data!;
-            // Las opciones salen de reservas reales y conservan sus IDs.
+
             final clientes = {for (final r in todas) r.clienteId: r.cliente};
             final servicios = {for (final r in todas) r.servicioId: r.servicio};
             final profesionales = {

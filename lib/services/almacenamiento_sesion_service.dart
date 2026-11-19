@@ -12,7 +12,7 @@ class AlmacenamientoSesionService {
 
   static Future<void> guardar(LoginResponse sesion) async {
     final preferencias = await SharedPreferences.getInstance();
-    // Primero desactivamos la restauración por si falla la escritura segura.
+
     await preferencias.setBool(_claveRecordar, false);
     await _seguro.write(
       key: _claveSesion,
@@ -39,7 +39,7 @@ class AlmacenamientoSesionService {
       if (!DateTime.now().isBefore(vencimiento)) {
         throw const FormatException();
       }
-      // También comprueba el vencimiento original del JWT; no renueva el token.
+
       final sesion = LoginResponse.fromJson(datos);
       return LoginResponse(
         accessToken: sesion.accessToken,

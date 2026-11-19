@@ -40,8 +40,6 @@ class LoginResponse {
       throw const FormatException('Respuesta de sesión incompleta.');
     }
 
-    // Los campos usuario, rol y exp fueron verificados en el JWT de la API.
-    // Leer el contenido permite mostrar datos; la autorización la decide el servidor.
     final partes = token.split('.');
     if (partes.length != 3) {
       throw const FormatException('Token de sesión no válido.');

@@ -89,7 +89,6 @@ class AppRoutes {
   static const newSpecialty = '/new-specialty';
   static const editSpecialty = '/edit-specialty';
 
-  // Las rutas de acceso son públicas; las demás requieren una sesión activa.
   static Route<dynamic> generarRuta(RouteSettings settings) {
     var nombre = settings.name ?? login;
     const publicas = [splash, login, resetPassword, verificationCode];
@@ -112,7 +111,6 @@ class AppRoutes {
           if (!context.mounted) return;
           if (sesion != null) SesionService.iniciar(sesion);
         } catch (_) {
-          // Si el dispositivo no permite leer el almacenamiento, pedimos login.
           SesionService.cerrar();
         }
         if (!context.mounted) return;

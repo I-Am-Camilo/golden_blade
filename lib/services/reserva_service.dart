@@ -11,7 +11,7 @@ import 'sesion_service.dart';
 class ReservaException implements Exception {
   const ReservaException(this.mensaje, {this.resultadoIncierto = false});
   final String mensaje;
-  // Si se perdió la respuesta del POST, consultar la agenda evita reenviar a ciegas.
+
   final bool resultadoIncierto;
 }
 
@@ -22,7 +22,6 @@ class ReservaService {
   Future<int> crear(CrearReservaRequest request) async {
     final encabezados = _encabezados();
     if (request.clienteNuevo != null) {
-      // Variante pública de Bruno: la empresa se indica en este encabezado.
       encabezados.remove('Authorization');
       encabezados['X-Empresa-Id'] = '${SesionService.actual!.empresaId}';
     }
@@ -89,7 +88,6 @@ class ReservaService {
     return reserva;
   }
 
-  // Solo se envían los campos que cambian: cliente y servicio se conservan.
   Future<void> reagendar(int id, DateTime fecha, int profesionalId) async {
     await _modificar('PUT', id, {
       'fecha': fecha.toIso8601String(),

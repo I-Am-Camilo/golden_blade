@@ -1,6 +1,5 @@
 import 'cliente.dart';
 
-// Variantes verificadas: cliente registrado o datos de cliente de primera vez.
 class CrearReservaRequest {
   const CrearReservaRequest({
     required this.fecha,

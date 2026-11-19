@@ -17,7 +17,7 @@ class JornadaLaboral {
   final bool tieneAlmuerzo;
   final String? horaInicioAlmuerzo;
   final String? horaFinAlmuerzo;
-  // La API utiliza 0 para domingo y 1 para lunes.
+
   static const dias = [
     'Domingo',
     'Lunes',

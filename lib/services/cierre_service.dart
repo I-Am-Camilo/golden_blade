@@ -62,7 +62,6 @@ class CierreService {
     throw const FormatException('No se pudo identificar el último cierre.');
   }
 
-  // La API no publica GET por ID: el detalle se recupera del listado real.
   Future<Cierre> obtener(int id) async {
     final cierres = await listar();
     for (final cierre in cierres) {
@@ -126,7 +125,6 @@ class CierreService {
     }
   }
 
-  // Solo se usa el filtro publicado por Swagger. No se envía el antiguo cierreId de Bruno.
   Future<List<Map<String, dynamic>>> comisiones(int cierreId) async {
     try {
       return await ComisionService(client: _client)

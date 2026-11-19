@@ -107,7 +107,6 @@ class _PantallaFormularioClienteState extends State<PantallaFormularioCliente> {
         correo: _correo.text.trim(),
       );
       if (widget.soloDatosReserva) {
-        // ID 0 identifica únicamente este borrador local; no se envía como clienteId.
         final borrador = Cliente(
           id: 0,
           documento: request.documento,

@@ -1,4 +1,3 @@
-// POST y PUT admiten los mismos seis campos publicados.
 class ClienteRequest {
   const ClienteRequest({
     required this.documento,

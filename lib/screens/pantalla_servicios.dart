@@ -51,7 +51,7 @@ class _PantallaServiciosState extends State<PantallaServicios> {
     final respuesta = await _servicioApi.listar();
     final especialidades = await _especialidadApi.listar();
     final servicios = respuesta.data.toList();
-    // El listado de la API omite inactivos. Solo recuperamos IDs ya conocidos, sin enumerarlos.
+
     for (final id in _idsConsultados.toList()) {
       if (!servicios.any((item) => item.id == id)) {
         servicios.add(await _servicioApi.obtener(id));

@@ -1,4 +1,3 @@
-// Reserva real recibida por GET /Reservas y GET /Reservas/{id}.
 class Reserva {
   const Reserva({
     required this.id,

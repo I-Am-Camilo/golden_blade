@@ -147,7 +147,7 @@ class _PantallaReagendarReservaState extends State<PantallaReagendarReserva> {
         );
       }
       await _api.reagendar(actual.id, hora, profesional);
-      // Si falla el GET después de aceptar el PUT, se consulta antes de repetir.
+
       _consultarAntesDeRepetir = true;
       final guardada = await _api.obtener(actual.id);
       if (guardada.clienteId != actual.clienteId ||

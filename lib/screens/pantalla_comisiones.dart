@@ -77,7 +77,7 @@ class _PantallaComisionesState extends State<PantallaComisiones> {
     if (!SesionService.activa) {
       throw const ComisionException('Tu sesión venció. Ingresa de nuevo.');
     }
-    // Los objetos recibidos desde una ficha son datos reales ya consultados.
+
     if (widget.cierre != null &&
         !_cierres.any((c) => c.id == widget.cierre!.id)) {
       _cierres.add(widget.cierre!);

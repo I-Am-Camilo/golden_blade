@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// El servidor no guarda iconos. Esta elección visual dura mientras la app siga abierta.
 class IconosEspecialidad {
   static final _iconos = <int, IconData>{};
 

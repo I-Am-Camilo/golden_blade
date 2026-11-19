@@ -28,7 +28,6 @@ class ProfesionalService {
     return ProfesionalesResponse.fromJson(_procesar(respuesta));
   }
 
-  // La ruta publicada conserva el nombre "especialiades", pero recibe un ID de servicio.
   Future<ProfesionalesResponse> porServicio(int servicioId) async {
     if (servicioId <= 0) {
       throw const ProfesionalException('Selecciona un servicio válido.');
@@ -109,7 +108,7 @@ class ProfesionalService {
         'El servidor no pudo confirmar la eliminación. Actualiza el listado antes de volver a intentarlo.',
       );
     }
-    // DELETE no publica datos de respuesta obligatorios.
+
     if ((respuesta.statusCode == 200 || respuesta.statusCode == 204) &&
         respuesta.body.trim().isEmpty) {
       return;

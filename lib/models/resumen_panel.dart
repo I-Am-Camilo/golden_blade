@@ -11,7 +11,7 @@ class ResumenPanel {
   final int reservasHoy;
   final int totalClientes;
   final int completadasHoy;
-  // null significa que falta algún precio, no que el valor sea cero.
+
   final int? valorCompletadas;
 
   factory ResumenPanel.calcular(

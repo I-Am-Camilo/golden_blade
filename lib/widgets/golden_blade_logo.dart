@@ -5,12 +5,27 @@ class GoldenBladeLogo extends StatelessWidget {
 
   final double height;
 
-  // Disimula el fondo blanco del logo al colocarlo sobre la foto.
   static const _filter = ColorFilter.matrix(<double>[
-    1, 0, 0, 0, 0, // Rojo.
-    0, 1, 0, 0, 0, // Verde.
-    0, 0, 1, 0, 0, // Azul.
-    0, 0, -8, 0, 1936, // Transparencia.
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    -8,
+    0,
+    1936,
   ]);
 
   @override

@@ -58,7 +58,6 @@ class ClienteService {
     return guardado;
   }
 
-  // GET recibe el documento; PUT recibe el ID. No son intercambiables.
   Future<Cliente> buscarPorDocumento(String documento) async {
     final uri = Uri.parse(_url)
         .replace(pathSegments: [...Uri.parse(_url).pathSegments, documento]);

@@ -51,7 +51,7 @@ class _PantallaResumenCierreState extends State<PantallaResumenCierre> {
           fechaFin: widget.periodo.end,
         ),
       );
-      // Si falla esta consulta, se conserva el ID y el botón solo reintenta leer.
+
       final cierre = await _api.obtener(_creado!.id);
       if (cierre.inicio != _creado!.inicio ||
           cierre.fin != _creado!.fin ||

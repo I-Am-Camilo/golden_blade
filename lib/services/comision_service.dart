@@ -51,7 +51,7 @@ class ComisionService {
       }
       return item;
     }).toList();
-    // Si la respuesta incluye las relaciones, se comprueba que no contradigan el filtro.
+
     for (final comision in comisiones) {
       if (profesionalId != null &&
           comision.containsKey('profesionalId') &&
@@ -71,8 +71,6 @@ class ComisionService {
     return comisiones;
   }
 
-  // El contrato publica el ID de comisión, no el de cierre ni el de profesional.
-  // La estructura de data se conservará hasta verificar una respuesta con servicios.
   Future<Object?> servicios(int comisionId) {
     if (comisionId <= 0) {
       throw const ComisionException(
